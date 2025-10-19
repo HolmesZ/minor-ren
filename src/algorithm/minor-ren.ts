@@ -13,9 +13,20 @@ export function calculateMinorRen(x: number, y: number, z: number): [string, str
     return [minorRenNames[index1]!, minorRenNames[index2]!, minorRenNames[index3]!];
 }
 
-/** 生成 [min, max] 的随机整数（含端点） */
+/** 生成 [min, max] 的真随机整数（含端点） */
 function randInt(min: number, max: number): number {
-    return Math.floor(Math.random() * (max - min + 1)) + min;
+    const range = max - min + 1;
+    const bytesNeeded = Math.ceil(Math.log2(range) / 8);
+    const maxValue = Math.pow(256, bytesNeeded);
+    const randomBytes = new Uint8Array(bytesNeeded);
+    
+    let randomValue;
+    do {
+        crypto.getRandomValues(randomBytes);
+        randomValue = randomBytes.reduce((acc, byte, i) => acc + byte * Math.pow(256, i), 0);
+    } while (randomValue >= maxValue - (maxValue % range));
+    
+    return min + (randomValue % range);
 }
 
 export type MinorRenResult = {
