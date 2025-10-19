@@ -22,6 +22,9 @@ const customY = ref<string>('')
 const customZ = ref<string>('')
 // 仅当点击三种起课按钮后展示结果
 const showResult = ref<boolean>(false)
+// 加载状态：用于显示等待动画
+const isLoading = ref<boolean>(false)
+const waitTime = 800 // ms
 
 function compute() {
 	errorMsg.value = ""
@@ -35,6 +38,8 @@ function compute() {
 }
 
 function rollRandom() {
+	isLoading.value = true
+	showResult.value = false
 	const { x: rx, y: ry, z: rz } = startByRandom(1, 60)
 	customX.value = String(rx)
 	customY.value = String(ry)
@@ -44,10 +49,16 @@ function rollRandom() {
 	z.value = rz
 	compute()
 	activeMode.value = 'random'
-	showResult.value = true
+	
+	setTimeout(() => {
+		isLoading.value = false
+		showResult.value = true
+	}, waitTime)
 }
 
 function rollByTime() {
+	isLoading.value = true
+	showResult.value = false
 	const { x: tx, y: ty, z: tz } = startByTime()
 	customX.value = String(tx)
 	customY.value = String(ty)
@@ -57,7 +68,11 @@ function rollByTime() {
 	z.value = tz
 	compute()
 	activeMode.value = 'time'
-	showResult.value = true
+	
+	setTimeout(() => {
+		isLoading.value = false
+		showResult.value = true
+	}, waitTime)
 }
 
 function parsePositiveInt(s: unknown): number | null {
@@ -77,12 +92,18 @@ function computeFromCustom() {
 		errorMsg.value = '请输入三个大于等于 1 的正整数'
 		return
 	}
+	isLoading.value = true
+	showResult.value = false
 	x.value = nx
 	y.value = ny
 	z.value = nz
 	compute()
 	activeMode.value = 'custom'
-	showResult.value = true
+	
+	setTimeout(() => {
+		isLoading.value = false
+		showResult.value = true
+	}, waitTime)
 }
 
 // 当输入变动时，暂不显示结果，等待显式点击计算按钮
@@ -131,6 +152,12 @@ function toggleDetails() {
 		</section>
 
 		<p v-if="errorMsg" class="error">{{ errorMsg }}</p>
+
+		<!-- 加载动画 -->
+		<div v-if="isLoading" class="loading">
+			<div class="spinner"></div>
+			<p>起课中...</p>
+		</div>
 
 		<section v-if="showResult && resultDetails.length" class="result">
 			<div class="flow">
@@ -198,7 +225,7 @@ body { margin: 0; }
 	margin-top: 4px;
 }
 .hero h1 {
-	font-weight: 800;
+	font-weight: waitTime;
 	letter-spacing: 0.02em;
 	font-size: clamp(22px, 3.2vw, 34px);
 	margin: 0;
@@ -240,6 +267,35 @@ body { margin: 0; }
 .pill strong { color: var(--text); margin-left: 2px; }
 
 .error { color: #ffb3b3; margin-top: 6px; }
+
+.loading {
+	margin-top: 20px;
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	gap: 12px;
+	color: var(--muted);
+}
+.spinner {
+	width: 40px;
+	height: 40px;
+	border: 3px solid var(--panel-strong);
+	border-top-color: var(--primary);
+	border-radius: 50%;
+	animation: spin 0.8s linear infinite;
+}
+@keyframes spin {
+	to { transform: rotate(360deg); }
+}
+.loading p {
+	margin: 0;
+	font-size: 14px;
+	animation: pulse 1.5s ease-in-out infinite;
+}
+@keyframes pulse {
+	0%, 100% { opacity: 0.6; }
+	50% { opacity: 1; }
+}
 
 .fields { display: grid; grid-auto-flow: column; grid-auto-columns: minmax(120px, auto); gap: 8px; }
 .field { display: grid; gap: 4px; text-align: left; }
@@ -283,7 +339,7 @@ body { margin: 0; }
 	background: rgba(255,255,255,0.06);
 	width: fit-content;
 }
-.name { font-size: 24px; font-weight: 800; letter-spacing: 0.02em; }
+.name { font-size: 24px; font-weight: waitTime; letter-spacing: 0.02em; }
 .element { color: var(--muted); font-size: 13px; }
 .arrow { text-align: center; font-size: 18px; color: var(--muted); }
 
