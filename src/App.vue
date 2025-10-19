@@ -118,6 +118,27 @@ const resultDetails = computed(() => {
 	return resultNames.value.map((n, i) => ({ pos: i + 1, name: n, item: starMap.get(n)! }))
 })
 
+// 所有六个断词的详细信息，用于在"断词详解"中展示
+const allStarsDetails = computed(() => {
+	if (!resultNames.value) return []
+	
+	// 创建一个 Map 记录起课结果中每个星的所有位置（序号数组）
+	const resultIndexMap = new Map<StarName, number[]>()
+	resultNames.value.forEach((name, idx) => {
+		if (!resultIndexMap.has(name)) {
+			resultIndexMap.set(name, [])
+		}
+		resultIndexMap.get(name)!.push(idx + 1)
+	})
+	
+	return SIX_STARS.map(star => ({
+		name: star.name as StarName,
+		item: star,
+		isHighlighted: resultIndexMap.has(star.name as StarName),
+		positions: resultIndexMap.get(star.name as StarName) || [] // 所有出现的位置
+	}))
+})
+
 const showDetails = ref(false)
 function toggleDetails() {
 	showDetails.value = !showDetails.value
@@ -178,9 +199,19 @@ function toggleDetails() {
 				</h2>
 				<transition name="fade">
 				  <div v-if="showDetails" class="grid">
-					  <article v-for="r in resultDetails" :key="'d-' + r.pos" class="detail">
-						  <h3>{{ r.name }}</h3>
-						  <p class="desc">{{ r.item.description }}</p>
+					  <article 
+						  v-for="star in allStarsDetails" 
+						  :key="'d-' + star.name" 
+						  class="detail"
+						  :class="{ highlighted: star.isHighlighted }"
+					  >
+						  <div class="detail-header">
+							  <h3>{{ star.name }}</h3>
+							  <div v-if="star.positions.length > 0" class="position-badges">
+								  <span v-for="pos in star.positions" :key="pos" class="position-badge">第{{ pos }}字</span>
+							  </div>
+						  </div>
+						  <p class="desc">{{ star.item.description }}</p>
 					  </article>
 				  </div>
 				</transition>
@@ -383,8 +414,35 @@ body { margin: 0; }
 	border: 1px solid var(--panel-strong);
 	border-radius: 12px;
 	background: linear-gradient(160deg, rgba(255,255,255,0.08), rgba(255,255,255,0.03));
+	transition: all 0.3s ease;
 }
-.detail h3 { margin: 0 0 4px; font-size: 15px; }
+.detail.highlighted {
+	border-color: var(--primary);
+	background: linear-gradient(160deg, rgba(124,156,255,0.2), rgba(124,156,255,0.1));
+	box-shadow: 0 0 20px rgba(124,156,255,0.3);
+}
+.detail-header {
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+	margin-bottom: 4px;
+	gap: 8px;
+}
+.detail h3 { margin: 0; font-size: 15px; }
+.position-badges {
+	display: flex;
+	gap: 4px;
+	flex-wrap: wrap;
+}
+.position-badge {
+	font-size: 11px;
+	color: var(--primary);
+	background: rgba(124,156,255,0.2);
+	padding: 2px 8px;
+	border-radius: 999px;
+	font-weight: 600;
+	white-space: nowrap;
+}
 .detail .desc { margin: 0; color: var(--text); opacity: 0.92; line-height: 1.6; }
 
 .foot { margin-top: 16px; color: var(--muted); font-size: 12px; text-align: center; }
