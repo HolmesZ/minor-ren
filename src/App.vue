@@ -383,6 +383,7 @@ body { margin: 0; }
 	user-select: none;
 	display: flex;
 	align-items: center;
+	justify-content: center;
 	gap: 6px;
 	transition: color .2s;
 }
